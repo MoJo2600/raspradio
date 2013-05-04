@@ -1,0 +1,4 @@
+Antenne Bayern|http://mp3.webradio.antenne.de:80
+Chillout|http://mp3channels.webradio.antenne.de/chillout
+Rockantenne|http://mp3.webradio.rockantenne.de:80
+Groove Salad|http://sfstream1.somafm.com:8032
