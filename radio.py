@@ -7,8 +7,7 @@ import sys
 import threading
 import datetime
 from time import sleep
-from thread import start_new_thread
-from Queue import Queue
+from RotaryEncoder import RotaryEncoder
 
 # Zuordnung der GPIO Pins (ggf. anpassen)
 DISPLAY_RS = 7
@@ -37,22 +36,6 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-class _GetchUnix:
-    def __init__(self):
-        import tty, sys
-
-    def __call__(self):
-        import sys, tty, termios
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
-
-
 class InternetRadio:
 
 
@@ -63,7 +46,7 @@ class InternetRadio:
 		self.init_playlist()
 		self.current_station_index = 1
 		self.refresh_suspended_till = datetime.datetime.now()
-		self.queue = Queue()
+		self._switch_station = False
 
 	def init_playlist(self):
 		# clear mpc playlist
@@ -102,10 +85,13 @@ class InternetRadio:
 
 		self._clear_display()
 
-		print "next"
+		self._show_track_indicator()
+
+		self._switch_station = True
+		print("next")
 
 	def previous(self):
-		self.refresh_suspended_till = datetime.datetime.now() + datetime.timedelta(seconds=5)
+		self.refresh_suspended_till = datetime.datetime.now() + datetime.timedelta(seconds=3)
 		self.current_station_index -= 1
 		if self.current_station_index < 1:
 			self.current_station_index = len(self.radio_stations)
@@ -113,51 +99,39 @@ class InternetRadio:
 		self._clear_display()
 
 		self._show_track_indicator()
-		print "previous"
 
-	def _show_station_worker(self):
-		while 1:
-			self._show_station()
-			try:
-				item = self.queue.get_nowait()
-				if item == "next":
-					self.next()
-				if item == "previous":
-					self.previous()
-				self.queue.task_done()
-			except:
-				pass
-#			time.sleep(0.3)
-
-	def _read_input_worker(self):
-		print "input"
-		getch = _GetchUnix()
-		while 1:
-			key = getch()
-			if key == "n":				
-				self.queue.put("next")
-			if key == "p":
-				self.queue.put("previous")
+		self._switch_station = True
+		print("previous")
 
 	def run(self):
-		print "starting display thread"
-		t1 = threading.Thread(target=self._show_station_worker())
-#		t1.daemon = True
-		t1.start()
-		print "starting input thread"
-		t2 = threading.Thread(target=self._read_input_worker())
-#		t2.daemon = True
-		t2.start()
-		print "all done"
+                self._show_track_indicator()
+		encoder = RotaryEncoder(4, 3, 2)
+		last_step = 0
+		while 1:
+			if self._switch_station and self.refresh_suspended_till < datetime.datetime.now():
+				self._switch_station = False
+				os.system("mpc play %s" % self.current_station_index)
 
+		        rotary_step = encoder.get_steps()
+		        if rotary_step > last_step:
+				self.next()
+		                last_step = rotary_step
+		        elif rotary_step < last_step:
+				self.previous()
+		                last_step = rotary_step
+
+			self._show_station()
+
+			time.sleep(0.1)
 
 	def _show_track_indicator(self):
+		lcd_byte(DISPLAY_LINE_1, DISPLAY_CMD)
+		lcd_string(self.radio_stations[self.current_station_index-1]['name'])
 		lcd_byte(DISPLAY_LINE_2, DISPLAY_CMD)			
 		track_numbers = "%d/%d" % (self.current_station_index,len(self.radio_stations)) 		
 		track_text = " " * (DISPLAY_WIDTH - len(track_numbers)) 
 		track_text += track_numbers
 		lcd_string(track_text)
-
 
 	def _show_station(self):
 #		print "%s, %s" % (self.refresh_suspended_till, datetime.datetime.now())
@@ -181,12 +155,11 @@ class InternetRadio:
 		lcd_byte(DISPLAY_LINE_1, DISPLAY_CMD)
 		lcd_string(lcd_text)
 
-		# show track indicator
-		self._show_track_indicator()
-
 		self.current_char += 1
 		if self.current_char > len(self.current_station):
 			self.current_char = 0
+
+		self.refresh_suspended_till = datetime.datetime.now() + datetime.timedelta(milliseconds=300)
 
 
 def main():
