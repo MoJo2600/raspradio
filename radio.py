@@ -105,14 +105,16 @@ class InternetRadio:
 
 	def run(self):
                 self._show_track_indicator()
-		encoder = RotaryEncoder(4, 3, 2)
+		encoder = RotaryEncoder(3, 4, 2)		
 		last_step = 0
 		while 1:
+			# own thread
 			if self._switch_station and self.refresh_suspended_till < datetime.datetime.now():
 				self._switch_station = False
-				os.system("mpc play %s" % self.current_station_index)
+#				os.system("mpc play %s" % self.current_station_index)
 
 		        rotary_step = encoder.get_steps()
+			# debounce! switch only all 100ms or so
 		        if rotary_step > last_step:
 				self.next()
 		                last_step = rotary_step
@@ -122,7 +124,7 @@ class InternetRadio:
 
 			self._show_station()
 
-			time.sleep(0.1)
+#			time.sleep(0.1)
 
 	def _show_track_indicator(self):
 		lcd_byte(DISPLAY_LINE_1, DISPLAY_CMD)
