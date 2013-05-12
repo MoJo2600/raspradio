@@ -1,4 +1,14 @@
+Bayern 1|http://gffstream.ic.llnwd.net/stream/gffstream_w10a
+Bayern 2|http://gffstream.ic.llnwd.net/stream/gffstream_w2a
+Bayern 3|http://gffstream.ic.llnwd.net/stream/gffstream_w12a
 Antenne Bayern|http://mp3.webradio.antenne.de:80
+EgoFM|http://edge.live.mp3.mdn.newmedia.nacamar.net/ps-egofm_192/livestream.mp3
+GongFM|http://edge.live.mp3.mdn.newmedia.nacamar.net/ps-radiogongfm/livestream.mp3
+On3|http://gffstream.ic.llnwd.net/stream/gffstream_w9a
+SWR3|http://swr-mp3-m-swr3.akacast.akamaistream.net/7/720/137136/v1/gnl.akacast.akamaistream.net/swr-mp3-m-swr3
 Chillout|http://mp3channels.webradio.antenne.de/chillout
 Rockantenne|http://mp3.webradio.rockantenne.de:80
 Groove Salad|http://sfstream1.somafm.com:8032
+Irish Pub Radio|http://176.31.240.114:8326
+Radio Kerry|http://shoutcasthq.radiokerry.ie:8000
+Bayern Klassik|http://gffstream.ic.llnwd.net/stream/gffstream_w13a
