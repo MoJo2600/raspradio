@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 import time
 import RPi.GPIO as GPIO
 import os
@@ -132,7 +133,6 @@ class InternetRadio:
 		self._clear_display()
 		self._show_track_indicator()
 		self._switch_station = True
-		print("next")
 
 	def previous(self):
 		self.refresh_suspended_till = datetime.datetime.now() + datetime.timedelta(seconds=3)
@@ -144,7 +144,6 @@ class InternetRadio:
 		self._clear_display()
 		self._show_track_indicator()
 		self._switch_station = True
-		print("previous")
 
 	def _store_last_station(self):
 		"""
@@ -236,7 +235,18 @@ def display_init():
 	lcd_byte(0x06,DISPLAY_CMD)
 	lcd_byte(0x01,DISPLAY_CMD)  
 
+def lcd_clean_string(text):
+        text = text.replace('ä', '\xE1')
+        text = text.replace('ö', '\xEF')
+        text = text.replace('ü', '\xF5')
+        text = text.replace('Ä', '\xE1')
+        text = text.replace('Ö', '\xEF')
+        text = text.replace('Ü', '\xF5')
+        text = text.replace('ß', '\xE2')
+        return text
+
 def lcd_string(message):
+	message = lcd_clean_string(message)
 	message = message.ljust(DISPLAY_WIDTH," ")  
 	for i in range(DISPLAY_WIDTH):
 	  lcd_byte(ord(message[i]),DISPLAY_CHR)
