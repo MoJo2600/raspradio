@@ -10,45 +10,19 @@ import Queue
 import datetime
 from time import sleep
 from RotaryEncoder import RotaryEncoder
-
-# Zuordnung der GPIO Pins (ggf. anpassen)
-DISPLAY_RS = 7
-DISPLAY_E  = 8
-DISPLAY_DATA4 = 25 
-DISPLAY_DATA5 = 24
-DISPLAY_DATA6 = 23
-DISPLAY_DATA7 = 18
-
-DISPLAY_WIDTH = 16 	# Zeichen je Zeile
-DISPLAY_LINE_1 = 0x80 	# Adresse der ersten Display Zeile
-DISPLAY_LINE_2 = 0xC0 	# Adresse der zweiten Display Zeile
-DISPLAY_CHR = True
-DISPLAY_CMD = False
-E_PULSE = 0.00005
-E_DELAY = 0.00005
-STR_PAD = " " * 16
+from LCD import LCD
 
 CURRENT_STATION = ""
 CURRENT_CHAR = 0
 
 LAST_STATION_FILE = ".laststation"
 
-WAIT_FOR_STATION_CHANGE = 200	# Wati 2 sek before switcheng stations
-
-def signal_handler(signal, frame):
-	"""
-	clean up before closing application
-	"""
-        print 'Closing Internet Radio!'
-	GPIO.cleanup()
-        sys.exit(0)
-	MPCClient.command_queue.join()
-# Connect singal_handler callback to sigint
-signal.signal(signal.SIGINT, signal_handler)
+WAIT_FOR_STATION_CHANGE = 200	# Wait 2 sek before switcheng stations
 
 class MPCClient(threading.Thread):
 	"""
-	this class handles the mpc commands in an own thread
+	handles the mpc commands in an own thread
+	the interrupts got disconnected due to the time the switching needed
 	"""
 	CMD_CLEAR = "mpc clear"
 	CMD_ADD = "mpc add %s"
@@ -65,13 +39,14 @@ class MPCClient(threading.Thread):
 			MPCClient.command_queue.task_done()		
 
 class InternetRadio:
-
-	def __init__(self):
+	
+	def __init__(self, lcd):
 		self.current_station = ""
 		self.current_char = 0
 		self.radio_stations = []
 		self.refresh_suspended_till = datetime.datetime.now()
 		self._switch_station = False
+		self.lcd = lcd
 
 		self.mpcclient = MPCClient()
 		self.mpcclient.setDaemon(True) 
@@ -118,10 +93,10 @@ class InternetRadio:
 		MPCClient.command_queue.put(MPCClient.CMD_PLAY_INDEX % self.current_station_index)
 		
 	def _clear_display(self):
-		lcd_byte(DISPLAY_LINE_1, DISPLAY_CMD)			
-		lcd_string(STR_PAD)
-		lcd_byte(DISPLAY_LINE_2, DISPLAY_CMD)			
-		lcd_string(STR_PAD)
+		self.lcd.lcd_byte(self.lcd.DISPLAY_LINE_1, self.lcd.DISPLAY_CMD)			
+		self.lcd.lcd_string(self.lcd.STR_PAD)
+		self.lcd.lcd_byte(self.lcd.DISPLAY_LINE_2, self.lcd.DISPLAY_CMD)			
+		self.lcd.lcd_string(self.lcd.STR_PAD)
 
 	def next(self):
 		self.refresh_suspended_till = datetime.datetime.now() + datetime.timedelta(seconds=5)
@@ -177,13 +152,13 @@ class InternetRadio:
 			time.sleep(0.001)
 
 	def _show_track_indicator(self):
-		lcd_byte(DISPLAY_LINE_1, DISPLAY_CMD)
-		lcd_string(self.radio_stations[self.current_station_index-1]['name'])
-		lcd_byte(DISPLAY_LINE_2, DISPLAY_CMD)			
+		self.lcd.lcd_byte(self.lcd.DISPLAY_LINE_1, self.lcd.DISPLAY_CMD)
+		self.lcd.lcd_string(self.radio_stations[self.current_station_index-1]['name'])
+		self.lcd.lcd_byte(self.lcd.DISPLAY_LINE_2, self.lcd.DISPLAY_CMD)			
 		track_numbers = "%d/%d" % (self.current_station_index, len(self.radio_stations)) 		
-		track_text = " " * (DISPLAY_WIDTH - len(track_numbers)) 
+		track_text = " " * (self.lcd.DISPLAY_WIDTH - len(track_numbers)) 
 		track_text += track_numbers
-		lcd_string(track_text)
+		self.lcd.lcd_string(track_text)
 
 	def _show_station(self):
 		if self.refresh_suspended_till > datetime.datetime.now():
@@ -197,96 +172,17 @@ class InternetRadio:
 
 		if self.current_station != station_text:
 			# reset view if current track changes
-			lcd_byte(DISPLAY_LINE_1, DISPLAY_CMD)
-			lcd_string(STR_PAD)
+			self.lcd.lcd_byte(self.lcd.DISPLAY_LINE_1, self.lcd.DISPLAY_CMD)
+			self.lcd.lcd_string(self.lcd.STR_PAD)
 			self.current_char = 0
 			self.current_station = station_text
 
 		lcd_text = self.current_station[self.current_char:(self.current_char+16)]
-		lcd_byte(DISPLAY_LINE_1, DISPLAY_CMD)
-		lcd_string(lcd_text)
+		self.lcd.lcd_byte(self.lcd.DISPLAY_LINE_1, self.lcd.DISPLAY_CMD)
+		self.lcd.lcd_string(lcd_text)
 
 		self.current_char += 1
 		if self.current_char > len(self.current_station):
 			self.current_char = 0
 
 		self.refresh_suspended_till = datetime.datetime.now() + datetime.timedelta(milliseconds=WAIT_FOR_STATION_CHANGE)
-
-
-def main():
-	GPIO.setmode(GPIO.BCM)
-	GPIO.setup(DISPLAY_E, GPIO.OUT)
-	GPIO.setup(DISPLAY_RS, GPIO.OUT)
-	GPIO.setup(DISPLAY_DATA4, GPIO.OUT)
-	GPIO.setup(DISPLAY_DATA5, GPIO.OUT)
-	GPIO.setup(DISPLAY_DATA6, GPIO.OUT)
-	GPIO.setup(DISPLAY_DATA7, GPIO.OUT)
-
-	display_init()
-
-	radio = InternetRadio()
-	radio.run()
-
-def display_init():
-	lcd_byte(0x33,DISPLAY_CMD)
-	lcd_byte(0x32,DISPLAY_CMD)
-	lcd_byte(0x28,DISPLAY_CMD)
-	lcd_byte(0x0C,DISPLAY_CMD)  
-	lcd_byte(0x06,DISPLAY_CMD)
-	lcd_byte(0x01,DISPLAY_CMD)  
-
-def lcd_clean_string(text):
-        text = text.replace('ä', '\xE1')
-        text = text.replace('ö', '\xEF')
-        text = text.replace('ü', '\xF5')
-        text = text.replace('Ä', '\xE1')
-        text = text.replace('Ö', '\xEF')
-        text = text.replace('Ü', '\xF5')
-        text = text.replace('ß', '\xE2')
-        return text
-
-def lcd_string(message):
-	message = lcd_clean_string(message)
-	message = message.ljust(DISPLAY_WIDTH," ")  
-	for i in range(DISPLAY_WIDTH):
-	  lcd_byte(ord(message[i]),DISPLAY_CHR)
-
-def lcd_byte(bits, mode):
-	GPIO.output(DISPLAY_RS, mode)
-	GPIO.output(DISPLAY_DATA4, False)
-	GPIO.output(DISPLAY_DATA5, False)
-	GPIO.output(DISPLAY_DATA6, False)
-	GPIO.output(DISPLAY_DATA7, False)
-	if bits&0x10==0x10:
-	  GPIO.output(DISPLAY_DATA4, True)
-	if bits&0x20==0x20:
-	  GPIO.output(DISPLAY_DATA5, True)
-	if bits&0x40==0x40:
-	  GPIO.output(DISPLAY_DATA6, True)
-	if bits&0x80==0x80:
-	  GPIO.output(DISPLAY_DATA7, True)
-	time.sleep(E_DELAY)    
-	GPIO.output(DISPLAY_E, True)  
-	time.sleep(E_PULSE)
-	GPIO.output(DISPLAY_E, False)  
-	time.sleep(E_DELAY)      
-	GPIO.output(DISPLAY_DATA4, False)
-	GPIO.output(DISPLAY_DATA5, False)
-	GPIO.output(DISPLAY_DATA6, False)
-	GPIO.output(DISPLAY_DATA7, False)
-	if bits&0x01==0x01:
-	  GPIO.output(DISPLAY_DATA4, True)
-	if bits&0x02==0x02:
-	  GPIO.output(DISPLAY_DATA5, True)
-	if bits&0x04==0x04:
-	  GPIO.output(DISPLAY_DATA6, True)
-	if bits&0x08==0x08:
-	  GPIO.output(DISPLAY_DATA7, True)
-	time.sleep(E_DELAY)    
-	GPIO.output(DISPLAY_E, True)  
-	time.sleep(E_PULSE)
-	GPIO.output(DISPLAY_E, False)  
-	time.sleep(E_DELAY)   
-
-if __name__ == '__main__':
-	main()

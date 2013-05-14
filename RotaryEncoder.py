@@ -6,7 +6,7 @@ ROTARY_A_PIN = 0
 ROTARY_B_PIN = 0
 SET_COUNT = 0
 ROTARY_EVENT = GPIO.RISING
-BOUNCETIME = 30
+BOUNCETIME = 50
 
 def rotate_callback(channel):
 	"""
@@ -35,6 +35,9 @@ def rotate_callback(channel):
 
 
 class RotaryEncoder:
+	"""
+	implementation for rotary encoder
+	"""
 	def __init__(self, a_pin, b_pin, sw_pin):
 		global ROTARY_A_PIN
 		global ROTARY_B_PIN
