@@ -1,13 +1,30 @@
+import Queue
 import threading
 import time
+import datetime
 
 
-class LcdUi:
+class LcdUi(object):
+
+    UIK_BUTTON = 0x00
+    UIK_PREVIOUS = 0x01
+    UIK_NEXT = 0x02
+
     def __init__(self, lcd, max_idle=60):
+        super(LcdUi, self).__init__()
         self._lcd = lcd
         self._frame_stack = []
         self._last_paint = None
         self._quit = threading.Event()
+        self._key_events = Queue.Queue()
+        self.lock = threading.Lock()
+        self._last_repaint = datetime.datetime.now()
+        self._max_fps = 1000000 / 4  # max 4 fps
+
+    def Quit(self):
+        with self.lock:
+            self._quit.set()
+            self._quit.clear()
 
     def rows(self):
         return self._lcd.rows()
@@ -20,15 +37,20 @@ class LcdUi:
 
     def CurrentFrame(self):
         if len(self._frame_stack):
-          return self._frame_stack[-1]
+            return self._frame_stack[-1]
         else:
-          return None
+            return None
 
     def Repaint(self):
         """Redraw the screen with the current frame"""
         self._DoRepaint()
 
     def _DoRepaint(self):
+        now = datetime.datetime.now()
+        activity_delta = now - self._last_repaint
+        if activity_delta.microseconds < self._max_fps:
+            return
+
         current_frame = self.CurrentFrame()
         current_buffer = None
 
@@ -42,6 +64,8 @@ class LcdUi:
                 self._lcd.ClearScreen()
             else:
                 self._lcd.WriteScreen(current_buffer)
+
+        self._last_repaint = datetime.datetime.now()
 
     def PushFrame(self, frame):
         """Add a frame to the top of the stack and set as current"""
@@ -66,13 +90,50 @@ class LcdUi:
         """
         self._lcd.ClearScreen()
         self._lcd.BacklightEnable(True)
+
+        # starting ui in an own thread
+        uithread = threading.Thread(target=self._ui_loop)
+        uithread.daemon = True
+        uithread.start()
+
+        # input thread
+        command = None
+        while command != 'x':
+            try:
+                command = raw_input("Commands (n)ext, (p)previous, (b)utton, e(x)it")
+                if command == 'x':
+                    self._quit.set()
+                if command == 'n':
+                    self._key_events.put(LcdUi.UIK_NEXT)
+                if command == 'p':
+                    self._key_events.put(LcdUi.UIK_PREVIOUS)
+                if command == 'b':
+                    self._key_events.put(LcdUi.UIK_BUTTON)
+            except (KeyboardInterrupt, IOError, EOFError):
+                self._quit.set()
+                break
+
+    def _ui_loop(self):
+        self._lcd.ClearScreen()
+        self._lcd.BacklightEnable(True)
         while not self._quit.isSet():
             self._step_loop()
-            time.sleep(0.01)
+            time.sleep(0.1)
+
+    def _HandleKeyEvents(self):
+        while True:
+            try:
+                event = self._key_events.get_nowait()
+            except Queue.Empty:
+                return
+
+            current_frame = self.CurrentFrame()
+            if current_frame:
+                current_frame.KeyDown(event)
 
     def _step_loop(self):
         # handle key inputs if needed
-        #self._HandleKeyEvents()
+        self._HandleKeyEvents()
 
         # repaint as needed
         self._DoRepaint()

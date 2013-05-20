@@ -17,26 +17,27 @@ CURRENT_CHAR = 0
 
 LAST_STATION_FILE = ".laststation"
 
-WAIT_FOR_STATION_CHANGE = 200	# Wait 2 sek before switcheng stations
+WAIT_FOR_STATION_CHANGE = 200    # Wait 2 sek before switcheng stations
+
 
 class MPCClient(threading.Thread):
-	"""
+    """
 	handles the mpc commands in an own thread
 	the interrupts got disconnected due to the time the switching needed
 	"""
-	CMD_CLEAR = "mpc clear"
-	CMD_ADD = "mpc add %s"
-	CMD_PLAY = "mpc play"
-	CMD_PLAY_INDEX = "mpc play %s"
-	
-	command_queue = Queue.Queue()
-	lock = threading.Lock()
-	
-	def run(self):
-		while True:
-			command = MPCClient.command_queue.get()
-			os.system(command)
-			MPCClient.command_queue.task_done()		
+    CMD_CLEAR = "mpc clear"
+    CMD_ADD = "mpc add %s"
+    CMD_PLAY = "mpc play"
+    CMD_PLAY_INDEX = "mpc play %s"
+
+    command_queue = Queue.Queue()
+    lock = threading.Lock()
+
+    def run(self):
+        while True:
+            command = MPCClient.command_queue.get()
+            os.system(command)
+            MPCClient.command_queue.task_done()
 
 class InternetRadio:
 	

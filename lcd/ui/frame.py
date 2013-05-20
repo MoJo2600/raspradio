@@ -1,13 +1,16 @@
 import array
+from common import Event
 
 
 class Frame(object):
-    def __init__(self, ui):
+    def __init__(self, ui, *args, **kwargs):
         self._ui = ui
         self._screen_buffer = ScreenBuffer(self.rows(), self.cols())
         self._widgets = {}
         self._position = {}
         self._span = {}
+
+        self.KeyDown = Event()
 
     def rows(self):
         """Returns the number of rows in the frame."""
@@ -46,6 +49,21 @@ class Frame(object):
             self._screen_buffer.Write(array.array('c', outstr), row, col, span)
         return self._screen_buffer
 
+    def Show(self):
+        """
+        Displays the frame
+        """
+        for widget in self._widgets:
+            widget.Show()
+        self._ui.PushFrame(self)
+
+    def Hide(self):
+        """
+        Hides the frame
+        """
+        for widget in self._widgets:
+            widget.Hide()
+        self._ui.PopFrame()
 
 class ScreenBuffer:
     def __init__(self, rows, cols):
