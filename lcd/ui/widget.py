@@ -1,7 +1,7 @@
 import datetime
 
 
-class Widget:
+class Widget(object):
     def __init__(self, frame):
         self._frame = frame
 
@@ -100,7 +100,8 @@ class LineWidget(Widget):
     def set_contents(self, s):
         self._contents = s
 
-    def contents(self): return self._contents
+    def contents(self):
+        return self._contents
 
     def set_prefix(self, s):
         self._prefix = s
