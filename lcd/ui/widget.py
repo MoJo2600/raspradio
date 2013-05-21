@@ -89,6 +89,7 @@ class LineWidget(Widget):
 #        self._postfix = self._wait_cursor[self._cursorstate]
         self._cursorstate += 1
 
+
         cols = self._frame.cols()
         outer_len = len(self._prefix) + len(self._postfix)
         inner_len = cols - outer_len

@@ -1,5 +1,4 @@
 # origin from https://code.google.com/p/pylcdui/
-import curses
 import sys
 from lcd import common
 from lcd.devices import Interfaces

@@ -5,6 +5,7 @@ import sys
 from threading import Timer
 from InternetRadio import InternetRadio
 from lcd.devices.Generic import MockCharacterDisplay
+from lcd.devices.HD44780GPIO import HD44780GPIO
 from lcd.ui import frame
 from lcd.ui import widget
 from lcd.ui.ui import LcdUi
@@ -56,8 +57,8 @@ class UPnPFrame(frame.Frame):
     def __init__(self, ui):
         frame.Frame.__init__(self, ui)
 
-        line1 = self.BuildWidget(widget.LineWidget, row=0, col=0)
-        line1.set_contents("UPnP Modus")
+        line1 = self.BuildWidget(widget.ScrollingLine, row=0, col=0)
+        line1.set_contents("Streame Musik vom Handy zum RasPi")
 
 
 class RadioApp(LcdUi):
@@ -65,7 +66,8 @@ class RadioApp(LcdUi):
 
     """
     def __init__(self):
-        device = MockCharacterDisplay(16, 2)
+        # device = MockCharacterDisplay(16, 2)
+        device = HD44780GPIO(7, 8, 25, 24, 23, 18, 16, 2)
         LcdUi.__init__(self, device)
         self.initialize()
 
