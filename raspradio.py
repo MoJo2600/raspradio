@@ -4,6 +4,7 @@ import signal
 import sys
 from threading import Timer
 from InternetRadio import InternetRadio
+from RotaryEncoder import RotaryEncoder
 from lcd.devices.Generic import MockCharacterDisplay
 from lcd.devices.HD44780GPIO import HD44780GPIO
 from lcd.ui import frame
@@ -68,7 +69,13 @@ class RadioApp(LcdUi):
     def __init__(self):
         # device = MockCharacterDisplay(16, 2)
         device = HD44780GPIO(7, 8, 25, 24, 23, 18, 16, 2)
-        LcdUi.__init__(self, device)
+        ui = LcdUi.__init__(self, device)
+
+        # i'm not sure if this is a good solution...
+        encoder = RotaryEncoder(4, 3, 2)
+        encoder.CW += lambda: ui._key_events.put(LcdUi.UIK_NEXT)
+        encoder.CCW += lambda: ui._key_events.put(LcdUi.UIK_PREVIOUS)
+
         self.initialize()
 
     def initialize(self):
