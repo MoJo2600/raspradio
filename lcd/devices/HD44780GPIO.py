@@ -76,7 +76,7 @@ class HD44780GPIO(Interfaces.ICharacterDisplay):
     def lcd_clean_string(self, text):
         text = text.replace('ä', '\xE1')
         text = text.replace('ö', '\xEF')
-         txt = text.replace('ü', '\xF5')
+        text = text.replace('ü', '\xF5')
         text = text.replace('Ä', '\xE1')
         text = text.replace('Ö', '\xEF')
         text = text.replace('Ü', '\xF5')
