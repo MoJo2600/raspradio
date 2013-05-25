@@ -10,14 +10,6 @@ class HD44780GPIO(Interfaces.ICharacterDisplay):
     """
     Driver class for a HD44780 compatible display
     """
-    # Zuordnung der GPIO Pins (ggf. anpassen)
-    DISPLAY_RS = 7
-    DISPLAY_E  = 8
-    DISPLAY_DATA4 = 25 
-    DISPLAY_DATA5 = 24
-    DISPLAY_DATA6 = 23
-    DISPLAY_DATA7 = 18
-    
     DISPLAY_WIDTH = 16     # characters per row
     DISPLAY_LINE_1 = 0x80     # address of first row
     DISPLAY_LINE_2 = 0xC0     # address of second row
@@ -84,7 +76,7 @@ class HD44780GPIO(Interfaces.ICharacterDisplay):
     def lcd_clean_string(self, text):
         text = text.replace('ä', '\xE1')
         text = text.replace('ö', '\xEF')
-        text = text.replace('ü', '\xF5')
+         txt = text.replace('ü', '\xF5')
         text = text.replace('Ä', '\xE1')
         text = text.replace('Ö', '\xEF')
         text = text.replace('Ü', '\xF5')
@@ -138,7 +130,8 @@ class HD44780GPIO(Interfaces.ICharacterDisplay):
         return " " * (self._rows * self._cols)
 
     def ClearScreen(self):
-        self._contents = self._AllocContents()
+        self.lcd_byte(0x01, self.DISPLAY_CMD)
+#        self._contents = self._AllocContents()
 
     def BacklightEnable(self, enable):
         pass

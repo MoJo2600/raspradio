@@ -3,6 +3,9 @@ from common import Event
 
 
 class Frame(object):
+    """
+    Represents a UI frame
+    """
     def __init__(self, ui, *args, **kwargs):
         self._ui = ui
         self._screen_buffer = ScreenBuffer(self.rows(), self.cols())
@@ -64,6 +67,12 @@ class Frame(object):
         for widget in self._widgets:
             widget.Hide()
         self._ui.PopFrame()
+
+    def clear(self):
+        """
+        Clears the Frame Contents
+        """
+        self._ui.clear()
 
 class ScreenBuffer:
     def __init__(self, rows, cols):

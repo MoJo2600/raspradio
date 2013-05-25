@@ -7,7 +7,7 @@ ROTARY_B_PIN = 0  # B pin of the rotary encoder
 ROTARY_SWITCH_PIN = 0  # Switch pin of the rotary encoder
 SET_COUNT = 0
 ROTARY_EVENT = GPIO.RISING
-BOUNCETIME = 50   # Bouncetime for the rotary encoder
+BOUNCETIME = 30   # Bouncetime for the rotary encoder
 
 CW = Event()
 CCW = Event()

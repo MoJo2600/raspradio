@@ -31,17 +31,12 @@ class RadioFrame(frame.Frame):
     """
     def __init__(self, ui):
         frame.Frame.__init__(self, ui)
-
         self.widget_title_line = self.BuildWidget(widget.ScrollingLine, row=0, col=0)
-        #self.widget_title_line.set_contents("InternetRadio")
-
         self.widget_track_line = self.BuildWidget(widget.LineWidget, row=1, col=2)
-        #line2.set_contents("jawoi")
 
 class SwitchToUPnPFrame(frame.Frame):
     def __init__(self, ui):
         frame.Frame.__init__(self, ui)
-
         line1 = self.BuildWidget(widget.LineWidget, row=0, col=0)
         line1.set_contents("Starte UPnP...")
 
@@ -49,7 +44,6 @@ class SwitchToUPnPFrame(frame.Frame):
 class SwitchToRadioFrame(frame.Frame):
     def __init__(self, ui):
         frame.Frame.__init__(self, ui)
-
         line1 = self.BuildWidget(widget.LineWidget, row=0, col=0)
         line1.set_contents("Starte Radio...")
 
@@ -57,7 +51,6 @@ class SwitchToRadioFrame(frame.Frame):
 class UPnPFrame(frame.Frame):
     def __init__(self, ui):
         frame.Frame.__init__(self, ui)
-
         line1 = self.BuildWidget(widget.ScrollingLine, row=0, col=0)
         line1.set_contents("Streame Musik vom Handy zum RasPi")
 
@@ -69,13 +62,11 @@ class RadioApp(LcdUi):
     def __init__(self):
         # device = MockCharacterDisplay(16, 2)
         device = HD44780GPIO(7, 8, 25, 24, 23, 18, 16, 2)
-        ui = LcdUi.__init__(self, device)
-
+        LcdUi.__init__(self, device)
         # i'm not sure if this is a good solution...
         encoder = RotaryEncoder(4, 3, 2)
-        encoder.CW += lambda: ui._key_events.put(LcdUi.UIK_NEXT)
-        encoder.CCW += lambda: ui._key_events.put(LcdUi.UIK_PREVIOUS)
-
+        encoder.CW += lambda: self._key_events.put(LcdUi.UIK_NEXT)
+        encoder.CCW += lambda: self._key_events.put(LcdUi.UIK_PREVIOUS)
         self.initialize()
 
     def initialize(self):

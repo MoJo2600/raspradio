@@ -1,8 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 import re
 import time
-#import RPi.GPIO as GPIO
 import os
 import signal
 import sys
@@ -10,17 +8,12 @@ import threading
 import Queue
 import datetime
 from time import sleep
-#from RotaryEncoder import RotaryEncoder
-#from LCD import LCD
 
 CURRENT_STATION = ""
 CURRENT_CHAR = 0
-
 LAST_STATION_FILE = ".laststation"
 STATIONS_FILE = "radiostations.txt"
-
-WAIT_FOR_STATION_CHANGE = 2.0    # Wait 2 sek before switcheng stations
-
+WAIT_FOR_STATION_CHANGE = 2.0    # Wait 2 sek before switching stations
 
 class MPCClient(threading.Thread):
     """
@@ -102,8 +95,6 @@ class InternetRadio:
             os.remove(LAST_STATION_FILE)
 
         self._switch_station()
-        #self._show_track_indicator()
-        #MPCClient.command_queue.put(MPCClient.CMD_PLAY_INDEX % self.current_station_index)
 
     def _switch_station(self):
         """
@@ -119,7 +110,7 @@ class InternetRadio:
 
     def _do_switch_station(self):
         """
-        Executes the switch
+        Executes the switch after a given time
         """
         MPCClient.command_queue.put(MPCClient.CMD_PLAY_INDEX % self.current_station_index)
         self._show_station()
@@ -146,9 +137,15 @@ class InternetRadio:
         self._switch_station()
 
     def start(self):
+        """
+        Starts the radio
+        """
         self._switch_station()
 
     def stop(self):
+        """
+        Stops the radio
+        """
         if self._switch_timer is not None:
             self._switch_timer.cancel()
         if self._show_station_timer is not None:
@@ -161,6 +158,7 @@ class InternetRadio:
         """
         f = open(LAST_STATION_FILE, 'w')
         f.write("%s" % self.current_station_index)
+        f.close()
 
     def _show_track_indicator(self):
         """
@@ -175,10 +173,12 @@ class InternetRadio:
         Reads information about the current station from mpc
         """
         # TODO should be implemented in MPCClient
+        self._frame.clear()
         station_text = ""
         f = os.popen("mpc current")
         for i in f.readlines():
             station_text += i
+
         station_text = re.sub("[^0-9a-zA-Z äöüÄÖÜ\-+:]", "", station_text)
 
         if self.current_station_text != station_text:
@@ -187,5 +187,6 @@ class InternetRadio:
 
         if self._show_station_timer is not None:
             self._show_station_timer.cancel()
+
         self._show_station_timer = threading.Timer(1.0, self._show_station)
         self._show_station_timer.start()

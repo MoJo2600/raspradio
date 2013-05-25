@@ -5,7 +5,9 @@ import datetime
 
 
 class LcdUi(object):
-
+    """
+    UI framework for lcd displays
+    """
     UIK_BUTTON = 0x00
     UIK_PREVIOUS = 0x01
     UIK_NEXT = 0x02
@@ -19,7 +21,13 @@ class LcdUi(object):
         self._key_events = Queue.Queue()
         self.lock = threading.Lock()
         self._last_repaint = datetime.datetime.now()
-        self._max_fps = 1000000 / 4  # max 4 fps
+        self._max_fps = 1000000 / 15  # max 15 fps
+
+    def clear(self):
+        """
+        Clears the screen
+        """
+        self._lcd.ClearScreen()
 
     def Quit(self):
         with self.lock:
@@ -114,13 +122,29 @@ class LcdUi(object):
                 break
 
     def _ui_loop(self):
+        """
+        UI loop that refreshes the contents of the screen
+        """
         self._lcd.ClearScreen()
         self._lcd.BacklightEnable(True)
         while not self._quit.isSet():
             self._step_loop()
             time.sleep(0.1)
 
+    def _step_loop(self):
+        """
+        Execution routine of the ui_loop
+        """
+        # handle key inputs if needed
+        self._HandleKeyEvents()
+
+        # repaint as needed
+        self._DoRepaint()
+
     def _HandleKeyEvents(self):
+        """
+        Handles the key events that have been stored in the _key_events Queue
+        """
         while True:
             try:
                 event = self._key_events.get_nowait()
@@ -131,9 +155,3 @@ class LcdUi(object):
             if current_frame:
                 current_frame.KeyDown(event)
 
-    def _step_loop(self):
-        # handle key inputs if needed
-        self._HandleKeyEvents()
-
-        # repaint as needed
-        self._DoRepaint()
