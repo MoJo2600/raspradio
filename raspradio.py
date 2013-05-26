@@ -32,7 +32,7 @@ class RadioFrame(frame.Frame):
     def __init__(self, ui):
         frame.Frame.__init__(self, ui)
         self.widget_title_line = self.BuildWidget(widget.ScrollingLine, row=0, col=0)
-        self.widget_track_line = self.BuildWidget(widget.LineWidget, row=1, col=2)
+        self.widget_track_line = self.BuildWidget(widget.LineWidget, row=1, col=0, align="right")
 
 class SwitchToUPnPFrame(frame.Frame):
     def __init__(self, ui):
@@ -67,6 +67,7 @@ class RadioApp(LcdUi):
         encoder = RotaryEncoder(4, 3, 2)
         encoder.CW += lambda: self._key_events.put(LcdUi.UIK_NEXT)
         encoder.CCW += lambda: self._key_events.put(LcdUi.UIK_PREVIOUS)
+        encoder.BUTTON += lambda: self._key_events.put(LcdUi.UIK_BUTTON)
         self.initialize()
 
     def initialize(self):

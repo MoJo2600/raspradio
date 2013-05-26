@@ -11,6 +11,7 @@ BOUNCETIME = 30   # Bouncetime for the rotary encoder
 
 CW = Event()
 CCW = Event()
+BUTTON = Event()
 
 def rotate_callback(channel):
     """
@@ -43,7 +44,7 @@ def button_callback(channel):
     """
     callback function for the switch input pin interrupt
     """
-    pass
+    BUTTON()
 
 class RotaryEncoder:
     """
@@ -58,9 +59,11 @@ class RotaryEncoder:
         """
         global ROTARY_A_PIN
         global ROTARY_B_PIN
+        global ROTARY_SWITCH_PIN
 
         ROTARY_A_PIN = a_pin
         ROTARY_B_PIN = b_pin
+        ROTARY_SWITCH_PIN = sw_pin
 
         self.lock = threading.Lock()
         self.sw_pin = sw_pin
@@ -70,6 +73,7 @@ class RotaryEncoder:
         # Events for easy binding
         self.CW = CW
         self.CCW = CCW
+        self.BUTTON = BUTTON
 
         # Setup all used ports
         GPIO.setmode(GPIO.BCM)
@@ -77,11 +81,4 @@ class RotaryEncoder:
         GPIO.setup(ROTARY_B_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(self.sw_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(ROTARY_A_PIN, ROTARY_EVENT, callback=rotate_callback, bouncetime=BOUNCETIME)
-
-    def _button_callback(self, channel):
-        print "button pressed"
-
-    def get_steps(self):
-        with self.lock:
-            count = SET_COUNT
-        return count
+        GPIO.add_event_detect(ROTARY_SWITCH_PIN, GPIO.RISING, callback=button_callback, bouncetime=100)

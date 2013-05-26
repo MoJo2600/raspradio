@@ -20,21 +20,24 @@ class Widget(object):
         """
         pass
 
+
 class ScrollingLine(Widget):
-    def __init__(self, frame, contents='', speed=5):
+    def __init__(self, frame, contents='', speed=50):
         Widget.__init__(self, frame)
         self._contents = contents
-        self.speed = speed
-        #self._current_index = 0
+        self._scroll_speed = 10000 / speed
         self._start_delay = 2  # 2 seconds delay before we start to scroll
-
         #self._last_repaint = datetime.datetime.now()
 
     def Show(self):
         """
         Reset everything to inital values
         """
+        self._reset()
+
+    def _reset(self):
         self._last_repaint = datetime.datetime.now()
+        self._last_scroll = datetime.datetime.now()
         self._current_index = 0
 
     def Paint(self):
@@ -45,8 +48,12 @@ class ScrollingLine(Widget):
         if activity_delta.seconds < self._start_delay:
             return self._contents[:cols]
 
+        scroll_delta = now - self._last_scroll
+        if scroll_delta.microseconds < self._scroll_speed:
+            return self._contents[:cols]
+
         # do not scroll if text fits in display
-        if len(self._contents) < cols:
+        if len(self._contents) <= cols:
             return self._contents
 
         # reset current indes to start over again
@@ -54,7 +61,7 @@ class ScrollingLine(Widget):
             self._current_index = 0
 
         # calculate left and right part of string from current index position
-        offset = self._current_index+cols
+        offset = self._current_index + cols
         if offset < len(self._contents):
             result = self._contents[self._current_index:offset]
         else:
@@ -67,34 +74,40 @@ class ScrollingLine(Widget):
 
     def set_contents(self, s):
         if len(s) > self._frame.cols():
-            s += " --- "  # scroll divider
+            s += " +++ "  # scroll divider
+        else:
+            s = s.ljust(self._frame.cols(), " ")
         self._contents = s
+        self._reset()
 
     def contents(self):
         return self._contents
 
 
 class LineWidget(Widget):
-    def __init__(self, frame, contents='', prefix='', postfix=''):
+    def __init__(self, frame, contents='', prefix='', postfix='', align='left'):
         Widget.__init__(self, frame)
         self._contents = contents
         self._prefix = prefix
         self._postfix = postfix
-        self._wait_cursor = ['/', '-', '\\', '|']
-        self._cursorstate = 0
+        self._align = align
+#       self._wait_cursor = ['/', '-', '\\', '|']
+#       self._cursorstate = 0
 
     def Paint(self):
-        if self._cursorstate > len(self._wait_cursor)-1:
-            self._cursorstate = 0
+#       if self._cursorstate > len(self._wait_cursor)-1:
+#           self._cursorstate = 0
 #        self._postfix = self._wait_cursor[self._cursorstate]
-        self._cursorstate += 1
-
+#       self._cursorstate += 1
 
         cols = self._frame.cols()
         outer_len = len(self._prefix) + len(self._postfix)
         inner_len = cols - outer_len
         contents = self._contents[:inner_len]
-        contents += ' ' * (inner_len - len(contents))
+        if self._align == "right":
+            contents = contents.rjust(cols)
+        else:
+            contents = contents.ljust(inner_len - len(contents))
         result = self._prefix + contents + self._postfix
         return result[:cols]
 

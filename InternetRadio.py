@@ -173,7 +173,6 @@ class InternetRadio:
         Reads information about the current station from mpc
         """
         # TODO should be implemented in MPCClient
-        self._frame.clear()
         station_text = ""
         f = os.popen("mpc current")
         for i in f.readlines():
